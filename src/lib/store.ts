@@ -47,6 +47,29 @@ export interface Tag {
   color: string;
 }
 
+export interface Folder {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  icon?: string;
+  parentId?: string;
+  isRoot: boolean;
+  documentCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  isPinned: boolean;
+  documentId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Notification {
   id: string;
   title: string;
@@ -109,6 +132,26 @@ interface AppState {
   addTag: (tag: Tag) => void;
   deleteTag: (id: string) => void;
 
+  // Folders
+  folders: Folder[];
+  setFolders: (folders: Folder[]) => void;
+  addFolder: (folder: Folder) => void;
+  updateFolder: (id: string, updates: Partial<Folder>) => void;
+  deleteFolder: (id: string) => void;
+  selectedFolder: string | null;
+  setSelectedFolder: (id: string | null) => void;
+  isFolderDialogOpen: boolean;
+  setFolderDialogOpen: (open: boolean) => void;
+
+  // Notes
+  notes: Note[];
+  setNotes: (notes: Note[]) => void;
+  addNote: (note: Note) => void;
+  updateNote: (id: string, updates: Partial<Note>) => void;
+  deleteNote: (id: string) => void;
+  isNoteDialogOpen: boolean;
+  setNoteDialogOpen: (open: boolean) => void;
+
   // Notifications
   notifications: Notification[];
   setNotifications: (notifications: Notification[]) => void;
@@ -144,6 +187,10 @@ interface AppState {
   setTagDialogOpen: (open: boolean) => void;
   isSettingsDialogOpen: boolean;
   setSettingsDialogOpen: (open: boolean) => void;
+  isBackupDialogOpen: boolean;
+  setBackupDialogOpen: (open: boolean) => void;
+  isAnalyticsDialogOpen: boolean;
+  setAnalyticsDialogOpen: (open: boolean) => void;
 
   // Calendar
   selectedDate: Date | undefined;
@@ -159,6 +206,11 @@ const initialState = {
   selectedDocuments: [],
   reminders: [],
   tags: [],
+  folders: [],
+  notes: [],
+  selectedFolder: null,
+  isFolderDialogOpen: false,
+  isNoteDialogOpen: false,
   notifications: [],
   unreadCount: 0,
   activeTab: 'dashboard',
@@ -173,6 +225,8 @@ const initialState = {
   shareDocument: null,
   isTagDialogOpen: false,
   isSettingsDialogOpen: false,
+  isBackupDialogOpen: false,
+  isAnalyticsDialogOpen: false,
   selectedDate: undefined,
 };
 
@@ -255,6 +309,36 @@ export const useAppStore = create<AppState>()(
           tags: state.tags.filter((t) => t.id !== id),
         })),
 
+      // Folders
+      setFolders: (folders) => set({ folders }),
+      addFolder: (folder) => set((state) => ({ folders: [...state.folders, folder] })),
+      updateFolder: (id, updates) =>
+        set((state) => ({
+          folders: state.folders.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+        })),
+      deleteFolder: (id) =>
+        set((state) => ({
+          folders: state.folders.filter((f) => f.id !== id),
+        })),
+      selectedFolder: null,
+      setSelectedFolder: (selectedFolder) => set({ selectedFolder }),
+      isFolderDialogOpen: false,
+      setFolderDialogOpen: (isFolderDialogOpen) => set({ isFolderDialogOpen }),
+
+      // Notes
+      setNotes: (notes) => set({ notes }),
+      addNote: (note) => set((state) => ({ notes: [note, ...state.notes] })),
+      updateNote: (id, updates) =>
+        set((state) => ({
+          notes: state.notes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+        })),
+      deleteNote: (id) =>
+        set((state) => ({
+          notes: state.notes.filter((n) => n.id !== id),
+        })),
+      isNoteDialogOpen: false,
+      setNoteDialogOpen: (isNoteDialogOpen) => set({ isNoteDialogOpen }),
+
       // Notifications
       setNotifications: (notifications) =>
         set({
@@ -294,6 +378,8 @@ export const useAppStore = create<AppState>()(
       setShareDocument: (shareDocument) => set({ shareDocument }),
       setTagDialogOpen: (isTagDialogOpen) => set({ isTagDialogOpen }),
       setSettingsDialogOpen: (isSettingsDialogOpen) => set({ isSettingsDialogOpen }),
+      setBackupDialogOpen: (isBackupDialogOpen) => set({ isBackupDialogOpen }),
+      setAnalyticsDialogOpen: (isAnalyticsDialogOpen) => set({ isAnalyticsDialogOpen }),
 
       // Calendar
       setSelectedDate: (selectedDate) => set({ selectedDate }),
@@ -309,6 +395,8 @@ export const useAppStore = create<AppState>()(
         documents: state.documents,
         reminders: state.reminders,
         tags: state.tags,
+        folders: state.folders,
+        notes: state.notes,
         notifications: state.notifications,
       }),
     }

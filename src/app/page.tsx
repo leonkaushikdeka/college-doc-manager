@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,12 +26,12 @@ import {
   FileText, Calendar as CalendarIcon, Upload, Bell, Download, Share2, Camera,
   Search, Filter, Star, Trash2, Eye, Scan, CheckCircle2, AlertCircle, Clock,
   GraduationCap, Wallet, FileCheck, User, X, Plus, Languages, Settings, Home,
-  Archive, Moon, Sun, Sparkles, Zap, Shield, Smartphone, Grid, List, Tag,
+  Archive, Moon, Sun, Sparkles, Zap, Shield, Smartphone, Grid, List, Tag as TagIcon,
   CalendarDays, Briefcase, Plane, MoreHorizontal, Copy, Link as LinkIcon,
   QrCode, ChevronRight, ChevronDown, FileArchive, FileSpreadsheet, FileJson,
   RefreshCw, Wifi, WifiOff, BellRing, Check, XCircle, AlertTriangle, Info,
   HelpCircle, LogOut, Database, Cloud, HardDrive, BarChart3, PieChart,
-  TrendingUp, Target, Award, BookOpen, CreditCard, ClipboardList, Folder,
+  TrendingUp, Target, Award, BookOpen, CreditCard, ClipboardList, Folder, Building2,
   FolderPlus, FolderOpen, StickyNote, Edit3, Save, Trash, FolderInput,
   FolderOutput, RotateCw, Crop, Contrast, Brightness, Image as ImageIcon,
   Maximize, Minimize, ZoomIn, ZoomOut, Move, Type, Palette, Layers,
@@ -133,6 +133,7 @@ export default function CollegeDocumentManager() {
     selectedDate, setSelectedDate,
   } = useAppStore();
 
+  const [mounted, setMounted] = useState(false);
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isOnboarded, setIsOnboarded] = useState(true);
@@ -173,9 +174,11 @@ export default function CollegeDocumentManager() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const t = translations[language];
+  // All effects must be called unconditionally
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Load data from localStorage
   useEffect(() => {
     const savedProfile = localStorage.getItem('studentProfile');
     const savedDocuments = localStorage.getItem('documents');
@@ -207,7 +210,75 @@ export default function CollegeDocumentManager() {
     setCalendarReminders(reminders);
   }, [reminders]);
 
-  // File upload handler
+  const translations = {
+    en: {
+      welcome: 'Welcome to College Document Manager', subtitle: 'Your digital vault for all college documents',
+      getStarted: 'Get Started', name: 'Full Name', email: 'Email Address', phone: 'Phone Number',
+      college: 'College/University', department: 'Department', semester: 'Semester', rollNumber: 'Roll Number',
+      next: 'Next', dashboard: 'Dashboard', documents: 'Documents', reminders: 'Reminders', scan: 'Scan',
+      settings: 'Settings', upcomingDeadlines: 'Upcoming Deadlines', quickAccess: 'Quick Access',
+      storageUsage: 'Storage Usage', upload: 'Upload Documents', recentDocuments: 'Recent Documents',
+      allDocuments: 'All Documents', search: 'Search documents...', uploadFile: 'Upload Files',
+      takePhoto: 'Take Photo', scan: 'Scan', categories: 'Categories', academic: 'Academic',
+      financial: 'Financial', administrative: 'Administrative', personal: 'Personal', placement: 'Placements',
+      internship: 'Internships', addReminder: 'Add Reminder', reminderTitle: 'Reminder Title',
+      reminderDescription: 'Description', reminderType: 'Reminder Type', dueDate: 'Due Date', save: 'Save',
+      exam: 'Exam', fee: 'Fee Payment', assignment: 'Assignment', registration: 'Registration', custom: 'Custom',
+      share: 'Share', download: 'Download', delete: 'Delete', view: 'View', favorite: 'Favorite',
+      daysLeft: 'days left', today: 'Today', tomorrow: 'Tomorrow', noDocuments: 'No documents yet',
+      noReminders: 'No upcoming deadlines', uploadSuccess: 'Documents uploaded successfully',
+      uploadError: 'Failed to upload documents', reminderSaved: 'Reminder saved successfully',
+      profileSaved: 'Profile saved successfully', bulkDelete: 'Delete Selected', bulkExport: 'Export Selected',
+      selectAll: 'Select All', deselectAll: 'Deselect All', selectedCount: 'selected', calendar: 'Calendar',
+      tags: 'Tags', createTag: 'Create Tag', tagName: 'Tag Name', tagColor: 'Tag Color', addTags: 'Add Tags',
+      shareDocument: 'Share Document', generateQr: 'Generate QR Code', copyLink: 'Copy Link', linkCopied: 'Link copied!',
+      exportData: 'Export Data', importData: 'Import Data', exportJson: 'Export as JSON', exportCsv: 'Export as CSV',
+      darkMode: 'Dark Mode', lightMode: 'Light Mode', logout: 'Logout', notifications: 'Notifications',
+      noNotifications: 'No new notifications', markAllRead: 'Mark all as read', offlineMode: 'Offline Mode',
+      onlineMode: 'Online Mode', syncData: 'Sync Data', lastSynced: 'Last synced',
+      folders: 'Folders', createFolder: 'Create Folder', folderName: 'Folder Name', folderColor: 'Folder Color',
+      notes: 'Notes', createNote: 'Create Note', noteTitle: 'Note Title', noteContent: 'Note Content',
+      analytics: 'Analytics', overview: 'Overview', statistics: 'Statistics', backup: 'Backup', restore: 'Restore',
+      scanner: 'Scanner', ocr: 'OCR', camera: 'Camera', capture: 'Capture', retake: 'Retake',
+      processing: 'Processing', extractedText: 'Extracted Text', noTextFound: 'No text found',
+    },
+    hi: {
+      welcome: 'कॉलेज डॉक्यूमेंट मैनेजर में स्वागत है',
+      subtitle: 'आपके सभी कॉलेज दस्तावेजों के लिए डिजिटल वॉल्ट',
+      getStarted: 'शुरू करें', name: 'पूरा नाम', email: 'ईमेल पता', phone: 'फोन नंबर',
+      college: 'कॉलेज/विश्वविद्यालय', department: 'विभाग', semester: 'सेमेस्टर', rollNumber: 'रोल नंबर',
+      next: 'आगे', dashboard: 'डैशबोर्ड', documents: 'दस्तावेज', reminders: 'रिमाइंडर', scan: 'स्कैन',
+      settings: 'सेटिंग्स', upcomingDeadlines: 'आगामी समयसीमा', quickAccess: 'त्वरित पहुंच',
+      storageUsage: 'स्टोरेज उपयोग', upload: 'दस्तावेज अपलोड करें', recentDocuments: 'हाल के दस्तावेज',
+      allDocuments: 'सभी दस्तावेज', search: 'दस्तावेज खोजें...', uploadFile: 'फ़ाइलें अपलोड करें',
+      takePhoto: 'फोटो लें', scan: 'स्कैन करें', categories: 'श्रेणियां', academic: 'शैक्षणिक',
+      financial: 'वित्तीय', administrative: 'प्रशासनिक', personal: 'व्यक्तिगत', placement: 'प्लेसमेंट',
+      internship: 'इंटर्नशिप', addReminder: 'रिमाइंडर जोड़ें', reminderTitle: 'रिमाइंडर शीर्षक',
+      reminderDescription: 'विवरण', reminderType: 'रिमाइंडर प्रकार', dueDate: 'नियत तारीख', save: 'सहेजें',
+      exam: 'परीक्षा', fee: 'फीस भुगतान', assignment: 'असाइनमेंट', registration: 'पंजीकरण', custom: 'कस्टम',
+      share: 'साझा करें', download: 'डाउनलोड', delete: 'हटाएं', view: 'देखें', favorite: 'पसंदीदा',
+      daysLeft: 'दिन शेष', today: 'आज', tomorrow: 'कल', noDocuments: 'अभी तक कोई दस्तावेज नहीं',
+      noReminders: 'कोई आगामी समयसीमा नहीं', uploadSuccess: 'दस्तावेज सफलतापूर्वक अपलोड हो गए',
+      uploadError: 'दस्तावेज अपलोड करने में विफल', reminderSaved: 'रिमाइंडर सफलतापूर्वक सहेजा गया',
+      profileSaved: 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई', bulkDelete: 'चयनित हटाएं', bulkExport: 'चयनित निर्यात करें',
+      selectAll: 'सभी चुनें', deselectAll: 'सभी अचयनित करें', selectedCount: 'चयनित', calendar: 'कैलेंडर',
+      tags: 'टैग', createTag: 'टैग बनाएं', tagName: 'टैग नाम', tagColor: 'टैग रंग', addTags: 'टैग जोड़ें',
+      shareDocument: 'दस्तावेज साझा करें', generateQr: 'QR कोड बनाएं', copyLink: 'लिंक कॉपी करें', linkCopied: 'लिंक कॉपी हो गई!',
+      exportData: 'डेटा निर्यात करें', importData: 'डेटा आयात करें', exportJson: 'JSON के रूप में निर्यात', exportCsv: 'CSV के रूप में निर्यात',
+      darkMode: 'डार्क मोड', lightMode: 'लाइट मोड', logout: 'लॉगआउट', notifications: 'सूचनाएं',
+      noNotifications: 'कोई नई सूचना नहीं', markAllRead: 'सभी पढ़ा हुआ चिह्नित करें', offlineMode: 'ऑफलाइन मोड',
+      onlineMode: 'ऑनलाइन मोड', syncData: 'डेटा सिंक करें', lastSynced: 'अंतिम सिंक',
+      folders: 'फ़ोल्डर', createFolder: 'फ़ोल्डर बनाएं', folderName: 'फ़ोल्डर का नाम', folderColor: 'फ़ोल्डर का रंग',
+      notes: 'नोट्स', createNote: 'नोट बनाएं', noteTitle: 'नोट का शीर्षक', noteContent: 'नोट की सामग्री',
+      analytics: 'विश्लेषण', overview: 'अवलोकन', statistics: 'आंकड़े', backup: 'बैकअप', restore: 'पुनर्स्थापित करें',
+      scanner: 'स्कैनर', ocr: 'ओसीआर', camera: 'कैमरा', capture: 'कैप्चर करें', retake: 'फिर से लें',
+      processing: 'प्रोसेसिंग', extractedText: 'निकाला गया टेक्स्ट', noTextFound: 'कोई टेक्स्ट नहीं मिला',
+    },
+  };
+
+  const t = translations[language] || translations.en;
+
+  // File upload handler - useCallback must be called before useEffect
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setNewDocument(prev => ({ ...prev, files: [...prev.files, ...acceptedFiles] }));
   }, []);
@@ -223,6 +294,57 @@ export default function CollegeDocumentManager() {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
     },
   });
+
+  // Check reminders function must be defined before its useEffect
+  const checkReminders = useCallback(() => {
+    const today = new Date();
+    reminders.forEach((reminder) => {
+      if (reminder.isCompleted) return;
+      const dueDate = new Date(reminder.dueDate);
+      const reminderDate = addDays(dueDate, -parseInt(reminder.reminderDays.toString()));
+      if (isWithinInterval(today, { start: reminderDate, end: dueDate })) {
+        toast({
+          title: reminder.title,
+          description: `${t.daysLeft}: ${format(dueDate, 'PPP')}`,
+          variant: reminder.priority === 'urgent' ? 'destructive' : 'default',
+        });
+      }
+    });
+  }, [reminders, t.daysLeft]);
+
+  // All effects must be before early return
+  useEffect(() => {
+    checkReminders();
+    const interval = setInterval(checkReminders, 60000);
+    return () => clearInterval(interval);
+  }, [checkReminders]);
+
+  // Memoized computed values - must be before early return
+  const getUpcomingReminders = useMemo(() => {
+    const today = new Date();
+    const sevenDaysFromNow = addDays(today, 7);
+    return reminders.filter((rem) => !rem.isCompleted && new Date(rem.dueDate) <= sevenDaysFromNow).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  }, [reminders]);
+
+  const getFilteredDocuments = useMemo(() => {
+    let filtered = documents;
+    if (selectedCategory !== 'all') filtered = filtered.filter((doc) => doc.category === selectedCategory);
+    if (selectedFolder) filtered = filtered.filter(doc => doc.folderId === selectedFolder);
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((doc) => doc.title.toLowerCase().includes(query) || doc.description?.toLowerCase().includes(query) || doc.fileName.toLowerCase().includes(query));
+    }
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(doc => selectedTags.every(tagId => doc.tags.includes(tagId)));
+    }
+    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [documents, selectedCategory, selectedFolder, searchQuery, selectedTags]);
+
+  const getFavoriteDocuments = useMemo(() => documents.filter((doc) => doc.isFavorite).slice(0, 4), [documents]);
+
+  if (!mounted) {
+    return null;
+  }
 
   // Camera functions
   const startCamera = async () => {
@@ -308,104 +430,14 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
     }
   };
 
-  // Check reminders
-  useEffect(() => {
-    checkReminders();
-    const interval = setInterval(checkReminders, 60000);
-    return () => clearInterval(interval);
-  }, [reminders]);
-
-  const checkReminders = () => {
-    const today = new Date();
-    reminders.forEach((reminder) => {
-      if (reminder.isCompleted) return;
-      const dueDate = new Date(reminder.dueDate);
-      const reminderDate = addDays(dueDate, -parseInt(reminder.reminderDays.toString()));
-      if (isWithinInterval(today, { start: reminderDate, end: dueDate })) {
-        toast({
-          title: reminder.title,
-          description: `${t.daysLeft}: ${format(dueDate, 'PPP')}`,
-          variant: reminder.priority === 'urgent' ? 'destructive' : 'default',
-        });
-      }
-    });
-  };
-
-  // Translations
-  const translations = {
-    en: {
-      welcome: 'Welcome to College Document Manager', subtitle: 'Your digital vault for all college documents',
-      getStarted: 'Get Started', name: 'Full Name', email: 'Email Address', phone: 'Phone Number',
-      college: 'College/University', department: 'Department', semester: 'Semester', rollNumber: 'Roll Number',
-      next: 'Next', dashboard: 'Dashboard', documents: 'Documents', reminders: 'Reminders', scan: 'Scan',
-      settings: 'Settings', upcomingDeadlines: 'Upcoming Deadlines', quickAccess: 'Quick Access',
-      storageUsage: 'Storage Usage', upload: 'Upload Documents', recentDocuments: 'Recent Documents',
-      allDocuments: 'All Documents', search: 'Search documents...', uploadFile: 'Upload Files',
-      takePhoto: 'Take Photo', scan: 'Scan', categories: 'Categories', academic: 'Academic',
-      financial: 'Financial', administrative: 'Administrative', personal: 'Personal', placement: 'Placements',
-      internship: 'Internships', addReminder: 'Add Reminder', reminderTitle: 'Reminder Title',
-      reminderDescription: 'Description', reminderType: 'Reminder Type', dueDate: 'Due Date', save: 'Save',
-      exam: 'Exam', fee: 'Fee Payment', assignment: 'Assignment', registration: 'Registration', custom: 'Custom',
-      share: 'Share', download: 'Download', delete: 'Delete', view: 'View', favorite: 'Favorite',
-      daysLeft: 'days left', today: 'Today', tomorrow: 'Tomorrow', noDocuments: 'No documents yet',
-      noReminders: 'No upcoming deadlines', uploadSuccess: 'Documents uploaded successfully',
-      uploadError: 'Failed to upload documents', reminderSaved: 'Reminder saved successfully',
-      profileSaved: 'Profile saved successfully', bulkDelete: 'Delete Selected', bulkExport: 'Export Selected',
-      selectAll: 'Select All', deselectAll: 'Deselect All', selectedCount: 'selected', calendar: 'Calendar',
-      tags: 'Tags', createTag: 'Create Tag', tagName: 'Tag Name', tagColor: 'Tag Color', addTags: 'Add Tags',
-      shareDocument: 'Share Document', generateQr: 'Generate QR Code', copyLink: 'Copy Link', linkCopied: 'Link copied!',
-      exportData: 'Export Data', importData: 'Import Data', exportJson: 'Export as JSON', exportCsv: 'Export as CSV',
-      darkMode: 'Dark Mode', lightMode: 'Light Mode', logout: 'Logout', notifications: 'Notifications',
-      noNotifications: 'No new notifications', markAllRead: 'Mark all as read', offlineMode: 'Offline Mode',
-      onlineMode: 'Online Mode', syncData: 'Sync Data', lastSynced: 'Last synced',
-      folders: 'Folders', createFolder: 'Create Folder', folderName: 'Folder Name', folderColor: 'Folder Color',
-      notes: 'Notes', createNote: 'Create Note', noteTitle: 'Note Title', noteContent: 'Note Content',
-      analytics: 'Analytics', overview: 'Overview', statistics: 'Statistics', backup: 'Backup', restore: 'Restore',
-      scanner: 'Scanner', ocr: 'OCR', camera: 'Camera', capture: 'Capture', retake: 'Retake',
-      processing: 'Processing', extractedText: 'Extracted Text', noTextFound: 'No text found',
-    },
-    hi: {
-      welcome: 'कॉलेज डॉक्यूमेंट मैनेजर में स्वागत है',
-      subtitle: 'आपके सभी कॉलेज दस्तावेजों के लिए डिजिटल वॉल्ट',
-      getStarted: 'शुरू करें', name: 'पूरा नाम', email: 'ईमेल पता', phone: 'फोन नंबर',
-      college: 'कॉलेज/विश्वविद्यालय', department: 'विभाग', semester: 'सेमेस्टर', rollNumber: 'रोल नंबर',
-      next: 'आगे', dashboard: 'डैशबोर्ड', documents: 'दस्तावेज', reminders: 'रिमाइंडर', scan: 'स्कैन',
-      settings: 'सेटिंग्स', upcomingDeadlines: 'आगामी समयसीमा', quickAccess: 'त्वरित पहुंच',
-      storageUsage: 'स्टोरेज उपयोग', upload: 'दस्तावेज अपलोड करें', recentDocuments: 'हाल के दस्तावेज',
-      allDocuments: 'सभी दस्तावेज', search: 'दस्तावेज खोजें...', uploadFile: 'फ़ाइलें अपलोड करें',
-      takePhoto: 'फोटो लें', scan: 'स्कैन करें', categories: 'श्रेणियां', academic: 'शैक्षणिक',
-      financial: 'वित्तीय', administrative: 'प्रशासनिक', personal: 'व्यक्तिगत', placement: 'प्लेसमेंट',
-      internship: 'इंटर्नशिप', addReminder: 'रिमाइंडर जोड़ें', reminderTitle: 'रिमाइंडर शीर्षक',
-      reminderDescription: 'विवरण', reminderType: 'रिमाइंडर प्रकार', dueDate: 'नियत तारीख', save: 'सहेजें',
-      exam: 'परीक्षा', fee: 'फीस भुगतान', assignment: 'असाइनमेंट', registration: 'पंजीकरण', custom: 'कस्टम',
-      share: 'साझा करें', download: 'डाउनलोड', delete: 'हटाएं', view: 'देखें', favorite: 'पसंदीदा',
-      daysLeft: 'दिन शेष', today: 'आज', tomorrow: 'कल', noDocuments: 'अभी तक कोई दस्तावेज नहीं',
-      noReminders: 'कोई आगामी समयसीमा नहीं', uploadSuccess: 'दस्तावेज सफलतापूर्वक अपलोड हो गए',
-      uploadError: 'दस्तावेज अपलोड करने में विफल', reminderSaved: 'रिमाइंडर सफलतापूर्वक सहेजा गया',
-      profileSaved: 'प्रोफ़ाइल सफलतापूर्वक सहेजी गई', bulkDelete: 'चयनित हटाएं', bulkExport: 'चयनित निर्यात करें',
-      selectAll: 'सभी चुनें', deselectAll: 'सभी अचयनित करें', selectedCount: 'चयनित', calendar: 'कैलेंडर',
-      tags: 'टैग', createTag: 'टैग बनाएं', tagName: 'टैग नाम', tagColor: 'टैग रंग', addTags: 'टैग जोड़ें',
-      shareDocument: 'दस्तावेज साझा करें', generateQr: 'QR कोड बनाएं', copyLink: 'लिंक कॉपी करें', linkCopied: 'लिंक कॉपी हो गई!',
-      exportData: 'डेटा निर्यात करें', importData: 'डेटा आयात करें', exportJson: 'JSON के रूप में निर्यात', exportCsv: 'CSV के रूप में निर्यात',
-      darkMode: 'डार्क मोड', lightMode: 'लाइट मोड', logout: 'लॉगआउट', notifications: 'सूचनाएं',
-      noNotifications: 'कोई नई सूचना नहीं', markAllRead: 'सभी पढ़ा हुआ चिह्नित करें', offlineMode: 'ऑफलाइन मोड',
-      onlineMode: 'ऑनलाइन मोड', syncData: 'डेटा सिंक करें', lastSynced: 'अंतिम सिंक',
-      folders: 'फ़ोल्डर', createFolder: 'फ़ोल्डर बनाएं', folderName: 'फ़ोल्डर का नाम', folderColor: 'फ़ोल्डर का रंग',
-      notes: 'नोट्स', createNote: 'नोट बनाएं', noteTitle: 'नोट का शीर्षक', noteContent: 'नोट की सामग्री',
-      analytics: 'विश्लेषण', overview: 'अवलोकन', statistics: 'आंकड़े', backup: 'बैकअप', restore: 'पुनर्स्थापित करें',
-      scanner: 'स्कैनर', ocr: 'ओसीआर', camera: 'कैमरा', capture: 'कैप्चर करें', retake: 'फिर से लें',
-      processing: 'प्रोसेसिंग', extractedText: 'निकाला गया टेक्स्ट', noTextFound: 'कोई टेक्स्ट नहीं मिला',
-    },
+  const handleThemeToggle = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const handleLanguageToggle = () => {
     const newLanguage = language === 'en' ? 'hi' : 'en';
     setLanguage(newLanguage);
     localStorage.setItem('language', newLanguage);
-  };
-
-  const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   const handleProfileSubmit = () => {
@@ -611,28 +643,6 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
     setIsLoadingAnalytics(false);
   };
 
-  const getUpcomingReminders = () => {
-    const today = new Date();
-    const sevenDaysFromNow = addDays(today, 7);
-    return reminders.filter((rem) => !rem.isCompleted && new Date(rem.dueDate) <= sevenDaysFromNow).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  };
-
-  const getFilteredDocuments = () => {
-    let filtered = documents;
-    if (selectedCategory !== 'all') filtered = filtered.filter((doc) => doc.category === selectedCategory);
-    if (selectedFolder) filtered = filtered.filter(doc => doc.folderId === selectedFolder);
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((doc) => doc.title.toLowerCase().includes(query) || doc.description?.toLowerCase().includes(query) || doc.fileName.toLowerCase().includes(query));
-    }
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(doc => selectedTags.every(tagId => doc.tags.includes(tagId)));
-    }
-    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  };
-
-  const getFavoriteDocuments = () => documents.filter((doc) => doc.isFavorite).slice(0, 4);
-
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -818,11 +828,14 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-64">
-                    {getUpcomingReminders().length > 0 ? (
+                    {getUpcomingReminders.length > 0 ? (
                       <div className="space-y-3">
-                        {getUpcomingReminders().map((reminder, index) => (
+                        {getUpcomingReminders.map((reminder, index) => (
                           <motion.div key={reminder.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 * index }} className="flex items-start gap-3 p-3 rounded-lg border border-orange-100 dark:border-orange-800/30 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
-                            <div className="flex-shrink-0 mt-1"><div className={`p-2 rounded-full ${getReminderTypeInfo(reminder.type).color}`}><getReminderTypeInfo(reminder.type).icon className="h-4 w-4" /></div></div>
+                            <div className="flex-shrink-0 mt-1"><div className={`p-2 rounded-full ${getReminderTypeInfo(reminder.type).color}`}>{(() => {
+                          const IconCmp = getReminderTypeInfo(reminder.type).icon;
+                          return IconCmp ? <IconCmp className="h-4 w-4" /> : null;
+                        })()}</div></div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-medium text-sm truncate">{reminder.title}</h4>
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{format(new Date(reminder.dueDate), 'PPP')}</p>
@@ -858,9 +871,9 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {getFavoriteDocuments().length > 0 ? (
+                  {getFavoriteDocuments.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3">
-                      {getFavoriteDocuments().map((doc, index) => (
+                      {getFavoriteDocuments.map((doc, index) => (
                         <motion.div key={doc.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 * index }} whileHover={{ scale: 1.03 }} className="p-3 rounded-lg border border-orange-100 dark:border-orange-800/30 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors cursor-pointer" onClick={() => handleDownloadDocument(doc)}>
                           <div className="flex items-center gap-2 mb-2">
                             <div className={`p-2 rounded-lg ${getCategoryInfo(doc.category).bg}`}>{(() => { const cat = getCategoryInfo(doc.category); return cat.icon && <cat.icon className={`h-5 w-5 ${cat.color}`} /> })()}</div>
@@ -910,7 +923,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
               <Button variant="outline" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>{viewMode === 'grid' ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}</Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline"><Tag className="h-4 w-4 mr-2" />{t.tags}{selectedTags.length > 0 && <Badge variant="secondary" className="ml-2">{selectedTags.length}</Badge>}</Button>
+                  <Button variant="outline"><TagIcon className="h-4 w-4 mr-2" />{t.tags}{selectedTags.length > 0 && <Badge variant="secondary" className="ml-2">{selectedTags.length}</Badge>}</Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-64">
                   <div className="space-y-2">
@@ -959,8 +972,8 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
 
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getFilteredDocuments().length > 0 ? (
-                  getFilteredDocuments().map((doc, index) => (
+                {getFilteredDocuments.length > 0 ? (
+                  getFilteredDocuments.map((doc, index) => (
                     <motion.div key={doc.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * index }}>
                       <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-orange-200 dark:border-orange-800 hover:shadow-lg transition-shadow">
                         <CardContent className="p-4">
@@ -998,8 +1011,8 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
               </div>
             ) : (
               <div className="space-y-2">
-                {getFilteredDocuments().length > 0 ? (
-                  getFilteredDocuments().map((doc, index) => (
+                {getFilteredDocuments.length > 0 ? (
+                  getFilteredDocuments.map((doc, index) => (
                     <motion.div key={doc.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * index }}>
                       <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-orange-200 dark:border-orange-800 hover:shadow-md transition-shadow">
                         <CardContent className="p-4">
@@ -1148,7 +1161,10 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className={`p-2 rounded-full ${getReminderTypeInfo(reminder.type).color} flex-shrink-0 mt-1`}>
-                            {getReminderTypeInfo(reminder.type).icon && <getReminderTypeInfo(reminder.type).icon className="h-4 w-4" />}
+                            {(() => {
+                            const IconCmp = getReminderTypeInfo(reminder.type).icon;
+                            return IconCmp ? <IconCmp className="h-4 w-4" /> : null;
+                          })()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

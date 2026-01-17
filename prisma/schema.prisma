@@ -141,6 +141,7 @@ model Document {
   studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   notes           Note[]
   versions        DocumentVersion[]
+  sharedLinks     SharedLink[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deletedAt       DateTime?
