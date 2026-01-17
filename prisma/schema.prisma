@@ -1,0 +1,334 @@
+// This is your Prisma schema file for College Document Manager
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("student")
+  password      String?   // For credentials auth
+  accounts      Account[]
+  sessions      Session[]
+  profile       StudentProfile?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// College Document Manager Models
+
+model StudentProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone             String?
+  college           String
+  university        String?
+  department        String?
+  semester          Int?
+  rollNumber        String?
+  language          String   @default("en")
+  isOnboarded       Boolean  @default(false)
+  storageUsed       Int      @default(0)
+  storageLimit      Int      @default(104857600)
+  avatar            String?
+  bio               String?
+  theme             String   @default("light")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  documents         Document[]
+  reminders         Reminder[]
+  documentTemplates DocumentTemplate[]
+  tags              Tag[]
+  folders           Folder[]
+  notes             Note[]
+  documentVersions  DocumentVersion[]
+  backups           Backup[]
+  analytics         Analytics[]
+}
+
+model Folder {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  color           String   @default("#3B82F6")
+  icon            String?  // Icon name
+  parentId        String?  // For nested folders
+  parent          Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children        Folder[] @relation("FolderHierarchy")
+  isRoot          Boolean  @default(true)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  documents       Document[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([studentProfileId])
+  @@index([parentId])
+}
+
+model Document {
+  id              String   @id @default(cuid())
+  title           String
+  category        String
+  subCategory     String?
+  description     String?
+  fileUrl         String
+  fileName        String
+  fileSize        Int
+  fileType        String
+  mimeType        String
+  folderId        String?
+  folder          Folder?  @relation(fields: [folderId], references: [id])
+  tags            Tag[]
+  isFavorite      Boolean  @default(false)
+  isOffline       Boolean  @default(false)
+  isPublic        Boolean  @default(false)
+  shareExpiry     DateTime?
+  scanData        String?  // OCR text data
+  ocrConfidence   Float?   // OCR confidence score
+  thumbnail       String?
+  extractedText   String?  // Full OCR extracted text
+  metadata        String?  // JSON: dimensions, pages, etc.
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  notes           Note[]
+  versions        DocumentVersion[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  @@index([studentProfileId])
+  @@index([category])
+  @@index([folderId])
+  @@index([createdAt])
+}
+
+model DocumentVersion {
+  id          String   @id @default(cuid())
+  version     Int      // Version number
+  title       String
+  fileUrl     String
+  fileName    String
+  fileSize    Int
+  changeNote  String?  // Description of changes
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([documentId])
+  @@index([studentProfileId])
+}
+
+model Tag {
+  id              String   @id @default(cuid())
+  name            String
+  color           String   @default("#3B82F6")
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  documents       Document[]
+  createdAt       DateTime @default(now())
+
+  @@unique([name, studentProfileId])
+}
+
+model Note {
+  id              String   @id @default(cuid())
+  title           String
+  content         String   // Markdown content
+  isPinned        Boolean  @default(false)
+  documentId      String?
+  document        Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([studentProfileId])
+  @@index([documentId])
+}
+
+model Reminder {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  type            String
+  dueDate         DateTime
+  reminderDays    Int      @default(3)
+  isCompleted     Boolean  @default(false)
+  isRecurring     Boolean  @default(false)
+  recurringType   String?
+  recurringEnd    DateTime?
+  priority        String   @default("medium")
+  color           String   @default("#3B82F6")
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  @@index([studentProfileId])
+  @@index([dueDate])
+  @@index([isCompleted])
+}
+
+model DocumentTemplate {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  category        String
+  fields          String   // JSON string of template fields
+  exampleData     String?
+  thumbnail       String?  // Preview image
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Notification {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String
+  message         String
+  type            String
+  isRead          Boolean  @default(false)
+  data            String?
+  actionUrl       String?  // Link to navigate to
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action          String
+  entityType      String
+  entityId        String
+  metadata        String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model SharedLink {
+  id              String   @id @default(cuid())
+  token           String   @unique @default(cuid())
+  documentId      String
+  document        Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  email           String?
+  password        String?
+  maxDownloads    Int?
+  downloadCount   Int      @default(0)
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([token])
+  @@index([documentId])
+}
+
+model Backup {
+  id              String   @id @default(cuid())
+  name            String
+  type            String   // full, documents, reminders
+  status          String   // pending, in_progress, completed, failed
+  progress        Int      @default(0)
+  fileUrl         String?
+  fileSize        Int?
+  error           String?
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+
+  @@index([studentProfileId])
+}
+
+model Analytics {
+  id              String   @id @default(cuid())
+  date            DateTime
+  totalDocuments  Int      @default(0)
+  totalSize       Int      @default(0)
+  documentsAdded  Int      @default(0)
+  documentsViewed Int      @default(0)
+  documentsShared Int      @default(0)
+  remindersSet    Int      @default(0)
+  remindersCompleted Int   @default(0)
+  storageUsed     Int      @default(0)
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@index([studentProfileId])
+  @@index([date])
+}
+
+// Cloud Sync Models (for future implementation)
+model CloudSync {
+  id              String   @id @default(cuid())
+  provider        String   // google, dropbox, onedrive
+  accessToken     String?
+  refreshToken    String?
+  expiresAt       DateTime?
+  lastSyncAt      DateTime?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
