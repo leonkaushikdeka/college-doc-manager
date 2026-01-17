@@ -309,7 +309,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 If you have any questions or need help:
 - Open an Issue: https://github.com/leonkaushikdeka/college-doc-manager/issues
 - Start a Discussion: https://github.com/leonkaushikdeka/college-doc-manager/discussions
-- Email: support@college-doc-manager.example.com
+- Email: leonkaushikdeka@gmail.com
 
 ---
 
