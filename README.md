@@ -1,6 +1,6 @@
 # College DocManager
 
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38BDF8?style=flat-square&logo=tailwindcss)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?style=flat-square&logo=prisma)
@@ -111,7 +111,7 @@ bun start
 ### Frontend
 | Technology | Purpose |
 |------------|---------|
-| Next.js 15 | React framework with App Router |
+| Next.js 16 | React framework with App Router (Turbopack) |
 | TypeScript 5 | Type-safe JavaScript |
 | Tailwind CSS 4 | Utility-first styling |
 | shadcn/ui | Beautiful, accessible components |
