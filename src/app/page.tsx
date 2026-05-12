@@ -50,6 +50,7 @@ import {
   TrendingDown, Minus, Plus as PlusIcon, X as XIcon, Search as SearchIcon,
 } from 'lucide-react';
 import { format, isWithinInterval, addDays, differenceInDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday, isTomorrow, isPast, subDays } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 import { useAppStore, Document, Reminder, Tag, Folder as FolderType, Note } from '@/lib/store';
 
 // Extended categories with icons
@@ -408,7 +409,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
   const saveScannedImage = () => {
     if (capturedImage) {
       const document: Document = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         title: `Scanned Document ${format(new Date(), 'yyyy-MM-dd HH:mm')}`,
         category: 'academic',
         subCategory: 'Scanned',
@@ -463,7 +464,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
         reader.onload = (e) => {
           const fileData = e.target?.result as string;
           const document: Document = {
-            id: crypto.randomUUID(),
+            id: uuidv4(),
             title: newDocument.title || file.name,
             category: newDocument.category,
             subCategory: newDocument.subCategory,
@@ -497,7 +498,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
       return;
     }
     const reminder: Reminder = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       title: newReminder.title,
       description: newReminder.description,
       type: newReminder.type,
@@ -522,7 +523,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
       toast({ variant: 'destructive', title: 'Error', description: 'Please enter a tag name' });
       return;
     }
-    const tag: Tag = { id: crypto.randomUUID(), name: newTag.name, color: newTag.color };
+    const tag: Tag = { id: uuidv4(), name: newTag.name, color: newTag.color };
     addTag(tag);
     toast({ title: 'Success', description: 'Tag created successfully' });
     setNewTag({ name: '', color: '#3B82F6' });
@@ -534,7 +535,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
       toast({ variant: 'destructive', title: 'Error', description: 'Please enter a folder name' });
       return;
     }
-    const folder: FolderType = { id: crypto.randomUUID(), name: newFolder.name, description: newFolder.description, color: newFolder.color, icon: newFolder.icon, parentId: newFolder.parentId, isRoot: !newFolder.parentId, documentCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const folder: FolderType = { id: uuidv4(), name: newFolder.name, description: newFolder.description, color: newFolder.color, icon: newFolder.icon, parentId: newFolder.parentId, isRoot: !newFolder.parentId, documentCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     addFolder(folder);
     toast({ title: 'Success', description: 'Folder created successfully' });
     setNewFolder({ name: '', description: '', color: '#3B82F6', icon: 'Folder', parentId: null });
@@ -546,7 +547,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
       toast({ variant: 'destructive', title: 'Error', description: 'Please enter a note title' });
       return;
     }
-    const note: Note = { id: crypto.randomUUID(), title: newNote.title, content: newNote.content, isPinned: newNote.isPinned, documentId: newNote.documentId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const note: Note = { id: uuidv4(), title: newNote.title, content: newNote.content, isPinned: newNote.isPinned, documentId: newNote.documentId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     addNote(note);
     toast({ title: 'Success', description: 'Note saved successfully' });
     setNewNote({ title: '', content: '', isPinned: false, documentId: null });
@@ -626,7 +627,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
   const handleCreateBackup = async () => {
     setIsCreatingBackup(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    const backup = { id: crypto.randomUUID(), name: `Backup ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, type: 'full', status: 'completed', createdAt: new Date().toISOString() };
+    const backup = { id: uuidv4(), name: `Backup ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, type: 'full', status: 'completed', createdAt: new Date().toISOString() };
     setBackups([backup, ...backups]);
     setIsCreatingBackup(false);
     toast({ title: 'Success', description: 'Backup created successfully' });

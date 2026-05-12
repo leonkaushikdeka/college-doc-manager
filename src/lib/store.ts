@@ -1,6 +1,32 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+const STORAGE_WARN_THRESHOLD = 5 * 1024 * 1024;
+
+function createQuotaAwareStorage(): Storage {
+  return {
+    getItem(name: string): string | null {
+      return localStorage.getItem(name);
+    },
+    setItem(name: string, value: string): void {
+      const size = new Blob([value]).size;
+      if (size > STORAGE_WARN_THRESHOLD) {
+        console.warn(
+          `localStorage "${name}" is ${(size / 1024 / 1024).toFixed(2)}MB (limit: ${(STORAGE_WARN_THRESHOLD / 1024 / 1024).toFixed(0)}MB). File data is not persisted.`
+        );
+      }
+      try {
+        localStorage.setItem(name, value);
+      } catch (e) {
+        console.error('localStorage quota exceeded. Unable to persist state.');
+      }
+    },
+    removeItem(name: string): void {
+      localStorage.removeItem(name);
+    },
+  };
+}
+
 export interface Document {
   id: string;
   title: string;
@@ -389,10 +415,27 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'college-doc-manager-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => createQuotaAwareStorage()),
       partialize: (state) => ({
         user: state.user,
-        documents: state.documents,
+        documents: state.documents.map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          category: doc.category,
+          subCategory: doc.subCategory,
+          description: doc.description,
+          fileName: doc.fileName,
+          fileSize: doc.fileSize,
+          fileType: doc.fileType,
+          mimeType: doc.mimeType,
+          tags: doc.tags,
+          isFavorite: doc.isFavorite,
+          isOffline: doc.isOffline,
+          isPublic: doc.isPublic,
+          shareExpiry: doc.shareExpiry,
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        })),
         reminders: state.reminders,
         tags: state.tags,
         folders: state.folders,

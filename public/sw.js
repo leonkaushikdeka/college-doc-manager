@@ -16,32 +16,47 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // API routes: network-first strategy (always fetch latest data)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => caches.match(request).then((r) => r || caches.match('/offline')))
+    );
+    return;
+  }
+
+  // Static assets: cache-first strategy
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Cache hit - return response
+    caches.match(request).then((response) => {
       if (response) {
         return response;
       }
 
-      // Clone the request
-      const fetchRequest = event.request.clone();
+      const fetchRequest = request.clone();
 
       return fetch(fetchRequest).then((response) => {
-        // Check if valid response
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
 
-        // Clone the response
         const responseToCache = response.clone();
 
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+          cache.put(request, responseToCache);
         });
 
         return response;
       }).catch(() => {
-        // Return offline page if fetch fails
         return caches.match('/offline');
       });
     })

@@ -132,6 +132,7 @@ model Document {
   isOffline       Boolean  @default(false)
   isPublic        Boolean  @default(false)
   shareExpiry     DateTime?
+  qrCode          String?  // QR code share token
   scanData        String?  // OCR text data
   ocrConfidence   Float?   // OCR confidence score
   thumbnail       String?

@@ -78,11 +78,47 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const MAX_BODY_SIZE = 10 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = [
+  'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
+function validateFileUpload(fileUrl: string): { valid: boolean; error?: string; decodedSize?: number } {
+  const match = fileUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    return { valid: false, error: 'File URL must be a valid base64 data URL' };
+  }
+
+  const actualMimeType = match[1].toLowerCase();
+  const base64Data = match[2];
+
+  if (!ALLOWED_MIME_TYPES.includes(actualMimeType)) {
+    return { valid: false, error: `File type "${actualMimeType}" is not allowed. Allowed types: PDF, images, Word, Excel` };
+  }
+
+  const decodedSize = Math.ceil(base64Data.length * 0.75);
+  if (decodedSize > MAX_BODY_SIZE) {
+    return { valid: false, error: `File size (${(decodedSize / 1024 / 1024).toFixed(2)}MB) exceeds the 10MB limit` };
+  }
+
+  return { valid: true, decodedSize };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const contentLength = parseInt(request.headers.get('content-length') || '0');
+    if (contentLength > MAX_BODY_SIZE) {
+      return NextResponse.json({ error: 'Request body too large. Maximum size is 10MB' }, { status: 413 });
     }
 
     const profile = await prisma.studentProfile.findUnique({
@@ -94,10 +130,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, category, subCategory, description, fileUrl, fileName, fileSize, fileType, mimeType, tags } = body;
+    const { title, category, subCategory, description, fileUrl, fileName, fileType, mimeType, tags } = body;
 
-    // Check storage limit
-    if (profile.storageUsed + fileSize > profile.storageLimit) {
+    const validation = validateFileUpload(fileUrl);
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const actualFileSize = validation.decodedSize!;
+
+    // Check storage limit using actual decoded file size
+    if (profile.storageUsed + actualFileSize > profile.storageLimit) {
       return NextResponse.json({ error: 'Storage limit exceeded' }, { status: 400 });
     }
 
@@ -112,7 +155,7 @@ export async function POST(request: NextRequest) {
         description,
         fileUrl,
         fileName,
-        fileSize,
+        fileSize: actualFileSize,
         fileType,
         mimeType,
         studentProfileId: profile.id,
@@ -129,7 +172,7 @@ export async function POST(request: NextRequest) {
     // Update storage used
     await prisma.studentProfile.update({
       where: { id: profile.id },
-      data: { storageUsed: profile.storageUsed + fileSize },
+      data: { storageUsed: profile.storageUsed + actualFileSize },
     });
 
     // Create audit log
