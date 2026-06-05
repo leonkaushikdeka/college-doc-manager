@@ -33,15 +33,15 @@ import {
   HelpCircle, LogOut, Database, Cloud, HardDrive, BarChart3, PieChart,
   TrendingUp, Target, Award, BookOpen, CreditCard, ClipboardList, Folder, Building2,
   FolderPlus, FolderOpen, StickyNote, Edit3, Save, Trash, FolderInput,
-  FolderOutput, RotateCw, Crop, Contrast, Brightness, Image as ImageIcon,
+  FolderOutput, RotateCw, Crop, Contrast, Image as ImageIcon,
   Maximize, Minimize, ZoomIn, ZoomOut, Move, Type, Palette, Layers,
   FileSignature, Scissors, Copy as CopyIcon, Layers as LayersIcon,
   Monitor, Smartphone as SmartphoneIcon, Tablet, Laptop, DownloadCloud,
-  UploadCloud, RefreshCw as RefreshCwIcon, Sync, WifiHigh, WifiLow,
-  WifiMedium, Battery, BatteryCharging, BatteryFull, Cpu, HardDisk,
-  PieChart as PieChartIcon, Activity, Server, Security, Privacy, Help,
-  Feedback, Contact, About, License, Heart, ThumbsUp, ThumbsDown,
-  FolderMinus, FolderHeart, FolderStar, FolderClock, FolderSettings,
+  UploadCloud, RefreshCw as RefreshCwIcon, WifiHigh, WifiLow,
+  Battery, BatteryCharging, BatteryFull, Cpu,
+  PieChart as PieChartIcon, Activity, Server,
+  Contact, Heart, ThumbsUp, ThumbsDown,
+  FolderMinus, FolderHeart, FolderClock,
   MoreVertical, GripVertical, Pin, PinOff, Undo, Redo, Type as TypeIcon,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Bold, Italic,
   Underline, Strikethrough, Highlighter, Eraser, History, Clock3,
@@ -200,7 +200,7 @@ export default function CollegeDocumentManager() {
     if (savedTags) setTags(JSON.parse(savedTags));
     if (savedFolders) setFolders(JSON.parse(savedFolders));
     if (savedNotes) setNotes(JSON.parse(savedNotes));
-    if (savedLanguage) setLanguage(savedLanguage);
+    if (savedLanguage === 'en' || savedLanguage === 'hi') setLanguage(savedLanguage);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch((error) => console.log('Service worker registration failed:', error));
@@ -216,11 +216,11 @@ export default function CollegeDocumentManager() {
       welcome: 'Welcome to College Document Manager', subtitle: 'Your digital vault for all college documents',
       getStarted: 'Get Started', name: 'Full Name', email: 'Email Address', phone: 'Phone Number',
       college: 'College/University', department: 'Department', semester: 'Semester', rollNumber: 'Roll Number',
-      next: 'Next', dashboard: 'Dashboard', documents: 'Documents', reminders: 'Reminders', scan: 'Scan',
+      next: 'Next', dashboard: 'Dashboard', documents: 'Documents', reminders: 'Reminders',
       settings: 'Settings', upcomingDeadlines: 'Upcoming Deadlines', quickAccess: 'Quick Access',
       storageUsage: 'Storage Usage', upload: 'Upload Documents', recentDocuments: 'Recent Documents',
       allDocuments: 'All Documents', search: 'Search documents...', uploadFile: 'Upload Files',
-      takePhoto: 'Take Photo', scan: 'Scan', categories: 'Categories', academic: 'Academic',
+      takePhoto: 'Take Photo', scanAction: 'Scan', categories: 'Categories', academic: 'Academic',
       financial: 'Financial', administrative: 'Administrative', personal: 'Personal', placement: 'Placements',
       internship: 'Internships', addReminder: 'Add Reminder', reminderTitle: 'Reminder Title',
       reminderDescription: 'Description', reminderType: 'Reminder Type', dueDate: 'Due Date', save: 'Save',
@@ -252,7 +252,7 @@ export default function CollegeDocumentManager() {
       settings: 'सेटिंग्स', upcomingDeadlines: 'आगामी समयसीमा', quickAccess: 'त्वरित पहुंच',
       storageUsage: 'स्टोरेज उपयोग', upload: 'दस्तावेज अपलोड करें', recentDocuments: 'हाल के दस्तावेज',
       allDocuments: 'सभी दस्तावेज', search: 'दस्तावेज खोजें...', uploadFile: 'फ़ाइलें अपलोड करें',
-      takePhoto: 'फोटो लें', scan: 'स्कैन करें', categories: 'श्रेणियां', academic: 'शैक्षणिक',
+      takePhoto: 'फोटो लें', scanAction: 'स्कैन करें', categories: 'श्रेणियां', academic: 'शैक्षणिक',
       financial: 'वित्तीय', administrative: 'प्रशासनिक', personal: 'व्यक्तिगत', placement: 'प्लेसमेंट',
       internship: 'इंटर्नशिप', addReminder: 'रिमाइंडर जोड़ें', reminderTitle: 'रिमाइंडर शीर्षक',
       reminderDescription: 'विवरण', reminderType: 'रिमाइंडर प्रकार', dueDate: 'नियत तारीख', save: 'सहेजें',
@@ -422,6 +422,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
         tags: ['scanned'],
         isFavorite: false,
         isOffline: true,
+        isPublic: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -477,6 +478,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
             tags: newDocument.tags,
             isFavorite: false,
             isOffline: true,
+            isPublic: false,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
@@ -565,10 +567,10 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
     toast({ title: 'Success', description: `${selectedDocuments.length} documents deleted` });
   };
 
-  const handleExport = (format: 'json' | 'csv') => {
+  const handleExport = (exportFormat: 'json' | 'csv') => {
     const dataToExport = selectedDocuments.length > 0 ? documents.filter(d => selectedDocuments.includes(d.id)) : documents;
     let content: string, filename: string, type: string;
-    if (format === 'json') {
+    if (exportFormat === 'json') {
       content = JSON.stringify(dataToExport, null, 2);
       filename = `documents-${format(new Date(), 'yyyy-MM-dd')}.json`;
       type = 'application/json';
@@ -588,7 +590,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast({ title: 'Success', description: `Documents exported as ${format.toUpperCase()}` });
+    toast({ title: 'Success', description: `Documents exported as ${exportFormat.toUpperCase()}` });
   };
 
   const handleGenerateQr = async (document: Document) => {
@@ -1111,7 +1113,7 @@ Document scanned successfully at ${format(new Date(), 'PPP pp')}`);
                         <div className="flex items-center justify-between mt-4 pt-2 border-t">
                           <p className="text-xs text-gray-500">{format(new Date(note.updatedAt), 'MMM d, yyyy')}</p>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setNewNote({ title: note.title, content: note.content, isPinned: note.isPinned, documentId: note.documentId }); setNoteDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setNewNote({ title: note.title, content: note.content, isPinned: note.isPinned, documentId: note.documentId ?? null }); setNoteDialogOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { deleteNote(note.id); toast({ title: 'Success', description: 'Note deleted' }); }}><Trash2 className="h-4 w-4 text-red-600" /></Button>
                           </div>
                         </div>

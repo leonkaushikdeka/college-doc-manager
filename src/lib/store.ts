@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, type StateStorage } from 'zustand/middleware';
 
 const STORAGE_WARN_THRESHOLD = 5 * 1024 * 1024;
 
-function createQuotaAwareStorage(): Storage {
+function createQuotaAwareStorage(): StateStorage {
   return {
     getItem(name: string): string | null {
       return localStorage.getItem(name);
@@ -39,6 +39,7 @@ export interface Document {
   fileType: string;
   mimeType: string;
   tags: string[];
+  folderId?: string | null;
   isFavorite: boolean;
   isOffline: boolean;
   isPublic: boolean;
@@ -79,7 +80,7 @@ export interface Folder {
   description?: string;
   color: string;
   icon?: string;
-  parentId?: string;
+  parentId?: string | null;
   isRoot: boolean;
   documentCount: number;
   createdAt: string;
@@ -91,7 +92,7 @@ export interface Note {
   title: string;
   content: string;
   isPinned: boolean;
-  documentId?: string;
+  documentId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

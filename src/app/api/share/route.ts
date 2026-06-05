@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import QRCode from 'qrcode';
+import bcrypt from 'bcryptjs';
 
 export async function GET(request: NextRequest) {
   try {
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
           token,
           documentId,
           email,
-          password: password ? await require('bcryptjs').hash(password, 10) : null,
+          password: password ? await bcrypt.hash(password, 10) : null,
           maxDownloads,
           expiresAt: expiresAt ? new Date(expiresAt) : null,
         },

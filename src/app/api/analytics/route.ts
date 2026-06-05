@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     ).length;
 
     // Documents added per day (last N days)
-    const documentsByDay = [];
+    const documentsByDay: Array<{ date: string; count: number }> = [];
     for (let i = days - 1; i >= 0; i--) {
       const date = subDays(today, i);
       const dayStart = startOfDay(date);
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     })).sort((a, b) => b.documentCount - a.documentCount);
 
     // Storage breakdown by category
-    const storageByCategory = {};
+    const storageByCategory: Record<string, { label: string; count: number; size: number }> = {};
     categories.forEach(cat => {
       const catDocs = profile.documents.filter(d => d.category === cat.id);
       storageByCategory[cat.id] = {

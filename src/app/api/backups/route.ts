@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     const profile = await prisma.studentProfile.findUnique({
       where: { userId: session.user.id },
       include: {
+        user: true,
         documents: {
           where: { deletedAt: null },
           include: { tags: true },
@@ -73,8 +74,8 @@ export async function POST(request: NextRequest) {
     // Prepare backup data
     const backupData: any = {
       profile: {
-        name: profile.name,
-        email: profile.email,
+        name: profile.user.name,
+        email: profile.user.email,
         phone: profile.phone,
         college: profile.college,
         university: profile.university,
